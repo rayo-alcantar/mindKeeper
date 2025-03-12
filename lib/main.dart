@@ -1,11 +1,14 @@
 // lib/main.dart
 import 'package:flutter/material.dart';
+import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
 import 'screens/create_reminder_screen.dart';
 import 'screens/manage_reminders_screen.dart';
 import 'screens/config_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await NotificationService().init();
   runApp(MindKeeperApp());
 }
 
@@ -16,7 +19,6 @@ class MindKeeperApp extends StatelessWidget {
       title: 'MindKeeper',
       theme: ThemeData(
         primarySwatch: Colors.blue,
-        // Configuraciones adicionales para accesibilidad (tamaños de fuente, contraste, etc.)
       ),
       initialRoute: '/',
       routes: {
