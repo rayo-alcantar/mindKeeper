@@ -1,4 +1,34 @@
 import 'package:flutter/material.dart';
+import 'screens/home_screen.dart';
+import 'screens/create_reminder_screen.dart';
+import 'screens/manage_reminders_screen.dart';
+import 'screens/config_screen.dart';
+
+void main() {
+  runApp(MindKeeperApp());
+}
+
+class MindKeeperApp extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+	return MaterialApp(
+	  title: 'MindKeeper',
+	  theme: ThemeData(
+		primarySwatch: Colors.blue,
+		// Se pueden agregar configuraciones de accesibilidad, como tamaño de fuente ajustable
+	  ),
+	  initialRoute: '/',
+	  routes: {
+		'/': (context) => HomeScreen(),
+		'/create': (context) => CreateReminderScreen(),
+		'/manage': (context) => ManageRemindersScreen(),
+		'/config': (context) => ConfigScreen(),
+		// Otras rutas pueden agregarse aquí, como la pantalla de edición, etc.
+	  },
+	);
+  }
+}
+import 'package:flutter/material.dart';
 
 void main() {
   runApp(const MyApp());
