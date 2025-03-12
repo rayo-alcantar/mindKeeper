@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿// lib/screens/create_reminder_screen.dart
+import 'package:flutter/material.dart';
 
 class CreateReminderScreen extends StatefulWidget {
   @override
@@ -9,10 +10,9 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
   final _formKey = GlobalKey<FormState>();
   String _name = '';
   String _description = '';
-  int _notificationCount = 1; // Podría ser un entero o un indicador de "constante"
+  int _notificationCount = 1;
   Duration _interval = Duration(minutes: 30);
 
-  // Ejemplo de lista de intervalos predefinidos (en minutos)
   final List<Duration> _predefinedIntervals = [
     Duration(minutes: 30),
     Duration(hours: 1),
@@ -33,11 +33,8 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
           key: _formKey,
           child: ListView(
             children: [
-              // Campo de nombre
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Nombre del recordatorio',
-                ),
+                decoration: InputDecoration(labelText: 'Nombre del recordatorio'),
                 onSaved: (value) => _name = value!.trim(),
                 validator: (value) {
                   if (value == null || value.trim().isEmpty) {
@@ -46,22 +43,18 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
                   return null;
                 },
               ),
-              // Campo de descripción
               TextFormField(
-                decoration: InputDecoration(
-                  labelText: 'Descripción',
-                ),
+                decoration: InputDecoration(labelText: 'Descripción'),
                 onSaved: (value) => _description = value!.trim(),
               ),
-              // Número de notificaciones
               TextFormField(
                 decoration: InputDecoration(
                   labelText: 'Número de notificaciones (0 para constante)',
                 ),
                 keyboardType: TextInputType.number,
-                onSaved: (value) => _notificationCount = int.tryParse(value!) ?? 1,
+                onSaved: (value) =>
+                    _notificationCount = int.tryParse(value!) ?? 1,
               ),
-              // Selección de intervalo
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: DropdownButtonFormField<Duration>(
@@ -88,28 +81,21 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
                   },
                 ),
               ),
-              // Botones de guardar y cancelar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
                   ElevatedButton(
                     onPressed: () {
-                      // Valida y guarda el formulario
                       if (_formKey.currentState!.validate()) {
                         _formKey.currentState!.save();
-                        // Aquí se llamaría al servicio para guardar el recordatorio
-                        // y configurar las notificaciones, utilizando, por ejemplo, notification_service.dart
-                        // Ejemplo:
-                        // ReminderService.createReminder(name: _name, description: _description, ...);
+                        // Aquí se integrará la lógica para guardar el recordatorio y programar notificaciones.
                         Navigator.pop(context);
                       }
                     },
                     child: Text('Guardar'),
                   ),
                   ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
+                    onPressed: () => Navigator.pop(context),
                     child: Text('Cancelar'),
                   ),
                 ],
