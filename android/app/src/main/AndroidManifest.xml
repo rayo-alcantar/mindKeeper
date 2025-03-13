@@ -11,6 +11,9 @@
     <!-- Despertar el dispositivo para programar notificaciones o alarmas, si corresponde -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
+    <!-- Agregar permiso para reinicio del dispositivo -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name="${applicationName}"
         android:label="mindkeeper"
@@ -39,6 +42,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <!-- Receptor para notificaciones programadas después del reinicio -->
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationBootReceiver"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON" />
+            </intent-filter>
+        </receiver>
+
+        <!-- Receptor para notificaciones -->
+        <receiver android:name="com.dexterous.flutterlocalnotifications.ScheduledNotificationReceiver"
+            android:exported="false" />
 
         <!-- No borres este meta-data; es usado por Flutter para registrar plugins -->
         <meta-data

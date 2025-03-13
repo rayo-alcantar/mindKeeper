@@ -1,5 +1,7 @@
 ﻿//lib/services/notification_service.dart
+import 'dart:io';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -17,14 +19,18 @@ class NotificationService {
 
   /// Inicializa el plugin y configura las zonas horarias.
   Future<void> init() async {
-    // Inicializa las zonas horarias.
+    // Inicialización de zonas horarias
     tz.initializeTimeZones();
+    tz.setLocalLocation(tz.getLocation('America/Mexico_City')); // Ajusta a tu zona horaria
 
-    // Ajustes de inicialización para Android.
+    // Crear y registrar el canal de notificaciones
+    await _createNotificationChannel();
+
+    // Configuración de inicialización
     final AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@mipmap/ic_launcher');
 
-    // Ajustes de inicialización para iOS.
+    // Nueva configuración para iOS sin el callback obsoleto
     final DarwinInitializationSettings initializationSettingsIOS =
         DarwinInitializationSettings(
       requestAlertPermission: true,
@@ -32,36 +38,62 @@ class NotificationService {
       requestSoundPermission: true,
     );
 
-    // Ajustes combinados.
     final InitializationSettings initializationSettings = InitializationSettings(
       android: initializationSettingsAndroid,
       iOS: initializationSettingsIOS,
     );
 
-    // Inicializa el plugin con los ajustes y define el callback al tocar la notificación.
     await flutterLocalNotificationsPlugin.initialize(
       initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) async {
-        // Aquí puedes manejar la acción cuando el usuario toca la notificación.
-        // Por ejemplo, navegar a una pantalla específica:
-        print('Notificación recibida (payload): ${response.payload}');
-      },
+      onDidReceiveNotificationResponse: _onNotificationTapped,
     );
+  }
+
+  Future<void> _createNotificationChannel() async {
+    const AndroidNotificationChannel channel = AndroidNotificationChannel(
+      'mindkeeper_channel',
+      'MindKeeper Notifications',
+      description: 'Canal para recordatorios de MindKeeper',
+      importance: Importance.max,
+      enableVibration: true,
+      enableLights: true,
+      playSound: true,
+    );
+
+    await flutterLocalNotificationsPlugin
+        .resolvePlatformSpecificImplementation<
+            AndroidFlutterLocalNotificationsPlugin>()
+        ?.createNotificationChannel(channel);
+  }
+
+  void _onNotificationTapped(NotificationResponse response) async {
+    if (response.payload != null) {
+      print('Notificación tocada. Payload: ${response.payload}');
+      // Aquí puedes implementar la navegación o acción deseada
+    }
   }
 
   /// Retorna la configuración de notificaciones para Android e iOS.
   NotificationDetails _notificationDetails() {
-    final androidDetails = AndroidNotificationDetails(
-      'mindkeeper_channel',          // ID del canal
-      'MindKeeper Notifications',    // Nombre del canal
-      channelDescription: 'Canal para recordatorios de MindKeeper',
-      importance: Importance.max,
-      priority: Priority.high,
+    return NotificationDetails(
+      android: AndroidNotificationDetails(
+        'mindkeeper_channel',
+        'MindKeeper Notifications',
+        channelDescription: 'Canal para recordatorios de MindKeeper',
+        importance: Importance.max,
+        priority: Priority.high,
+        enableVibration: true,
+        enableLights: true,
+        icon: '@mipmap/ic_launcher',
+        largeIcon: const DrawableResourceAndroidBitmap('@mipmap/ic_launcher'),
+        channelShowBadge: true,
+      ),
+      iOS: const DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+      ),
     );
-
-    final iosDetails = DarwinNotificationDetails();
-
-    return NotificationDetails(android: androidDetails, iOS: iosDetails);
   }
 
   /// Programa una notificación individual para un momento específico.
@@ -78,22 +110,35 @@ class NotificationService {
     required DateTime scheduledTime,
     String? payload,
   }) async {
-    // Convierte la hora local a la zona horaria configurada.
-    final tz.TZDateTime tzScheduled =
-        tz.TZDateTime.from(scheduledTime, tz.local);
-
-    await flutterLocalNotificationsPlugin.zonedSchedule(
-      id,                           // ID de la notificación
-      title,                        // Título
-      body,                         // Cuerpo
-      tzScheduled,                  // Fecha y hora programadas
-      _notificationDetails(),       // Configuración de notificación
-      payload: payload,
-      // Usa modo exact para dispararse aunque el dispositivo esté inactivo
-      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
-    );
+    try {
+      await flutterLocalNotificationsPlugin.zonedSchedule(
+        id,
+        title,
+        body,
+        tz.TZDateTime.from(scheduledTime, tz.local),
+        NotificationDetails(
+          android: AndroidNotificationDetails(
+            'mindkeeper_channel',
+            'MindKeeper Notifications',
+            channelDescription: 'Canal para recordatorios de MindKeeper',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: const DarwinNotificationDetails(
+            presentAlert: true,
+            presentBadge: true,
+            presentSound: true,
+          ),
+        ),
+        androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+        uiLocalNotificationDateInterpretation:
+            UILocalNotificationDateInterpretation.absoluteTime,
+        payload: payload,
+      );
+      print('Notificación programada para: $scheduledTime');
+    } catch (e) {
+      print('Error al programar la notificación: $e');
+    }
   }
 
   /// Programa un "recordatorio completo".
@@ -169,5 +214,33 @@ class NotificationService {
   /// Cancela todas las notificaciones programadas.
   Future<void> cancelAllNotifications() async {
     await flutterLocalNotificationsPlugin.cancelAll();
+  }
+
+  /// Verifica si los permisos de notificación están habilitados
+  Future<bool> checkNotificationPermissions() async {
+    if (Platform.isAndroid) {
+      final status = await Permission.notification.status;
+      if (status.isDenied) {
+        final result = await Permission.notification.request();
+        return result.isGranted;
+      }
+      return status.isGranted;
+    } else if (Platform.isIOS) {
+      final settings = await flutterLocalNotificationsPlugin
+          .resolvePlatformSpecificImplementation<
+              IOSFlutterLocalNotificationsPlugin>()
+          ?.requestPermissions(
+            alert: true,
+            badge: true,
+            sound: true,
+          );
+      return settings ?? false;
+    }
+    return false;
+  }
+
+  /// Obtiene todas las notificaciones pendientes
+  Future<List<PendingNotificationRequest>> getPendingNotifications() async {
+    return await flutterLocalNotificationsPlugin.pendingNotificationRequests();
   }
 }

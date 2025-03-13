@@ -1,6 +1,7 @@
 //lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 import 'services/notification_service.dart';
 import 'screens/home_screen.dart';
@@ -13,8 +14,19 @@ void main() async {
 
   // Inicializa el servicio de notificaciones
   await NotificationService().init();
+  
+  // Solicitar permisos al inicio de la app
+  await _requestPermissions();
 
   runApp(MindKeeperApp());
+}
+
+Future<void> _requestPermissions() async {
+  // Solicitar múltiples permisos
+  await Future.wait([
+    Permission.notification.request(),
+    Permission.scheduleExactAlarm.request(),
+  ]);
 }
 
 class MindKeeperApp extends StatefulWidget {
@@ -26,11 +38,18 @@ class _MindKeeperAppState extends State<MindKeeperApp> {
   @override
   void initState() {
     super.initState();
-    _requestNotificationPermission();
+    _initializeNotifications();
   }
 
-  /// Solicita permiso de notificaciones en Android 13+ (POST_NOTIFICATIONS).
-  /// En versiones anteriores, este permiso no hará nada y la notificación funcionará igual.
+  Future<void> _initializeNotifications() async {
+    await _requestNotificationPermission();
+    // Verificar permisos de alarmas exactas (Android 12+)
+    if (await Permission.scheduleExactAlarm.isDenied) {
+      print("Se requiere permiso de alarmas exactas");
+      await Permission.scheduleExactAlarm.request();
+    }
+  }
+
   Future<void> _requestNotificationPermission() async {
     final status = await Permission.notification.status;
     if (status.isDenied || status.isPermanentlyDenied) {
@@ -39,10 +58,31 @@ class _MindKeeperAppState extends State<MindKeeperApp> {
         print("Permiso de notificaciones concedido.");
       } else {
         print("Permiso de notificaciones denegado.");
+        // Mostrar diálogo para explicar por qué se necesitan los permisos
+        _showPermissionDeniedDialog();
       }
-    } else {
-      // Ya está concedido o no aplica (versiones < Android 13)
-      print("Permiso de notificaciones ya concedido o no requerido.");
+    }
+  }
+
+  void _showPermissionDeniedDialog() {
+    if (mounted) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: Text('Permisos necesarios'),
+          content: Text('Las notificaciones son necesarias para recordarte tus tareas. Por favor, actívalas en la configuración.'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cerrar'),
+            ),
+            TextButton(
+              onPressed: () => openAppSettings(),
+              child: Text('Abrir configuración'),
+            ),
+          ],
+        ),
+      );
     }
   }
 
