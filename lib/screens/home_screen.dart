@@ -1,13 +1,13 @@
-﻿import 'package:flutter/material.dart';
+﻿//lib/screens/home_screen.dart
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatelessWidget {
-  // Función que recibe el BuildContext y la URL a abrir.
+  // Función para abrir una URL externa
   Future<void> _openUrl(BuildContext context, String url) async {
     if (await canLaunch(url)) {
       await launch(url);
     } else {
-      // Usa el contexto recibido para mostrar un SnackBar
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se pudo abrir el enlace')),
       );
@@ -16,7 +16,6 @@ class HomeScreen extends StatelessWidget {
 
   // Función para salir de la aplicación
   void _exitApp(BuildContext context) {
-    // Se recomienda usar SystemNavigator.pop() en aplicaciones móviles
     Navigator.of(context).pop();
   }
 
@@ -49,14 +48,12 @@ class HomeScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              // Llama a _openUrl pasando el contexto actual y la URL de PayPal
               _openUrl(context, 'https://www.paypal.me/tuusuario');
             },
             child: Text('Donar al desarrollador'),
           ),
           ElevatedButton(
             onPressed: () {
-              // Llama a _openUrl pasando el contexto actual y la URL de tu sitio web
               _openUrl(context, 'https://www.tusitioweb.com');
             },
             child: Text('Mirar la web del desarrollador'),
@@ -67,6 +64,9 @@ class HomeScreen extends StatelessWidget {
             },
             child: Text('Salir'),
           ),
+
+          // Se ha removido el botón de prueba de notificación en 30s,
+          // tal como solicitaste.
         ],
       ),
     );

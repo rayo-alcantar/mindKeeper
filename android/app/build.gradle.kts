@@ -6,6 +6,7 @@ plugins {
 }
 
 android {
+    namespace = "com.rayoscompany.mindkeeper"
     ndkVersion = "27.0.12077973"
     namespace = "com.example.mindkeeper"
 
