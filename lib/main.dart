@@ -1,4 +1,3 @@
-//lib/main.dart
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -13,20 +12,13 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializa el servicio de notificaciones
-  await NotificationService().init();
+  final NotificationService notificationService = NotificationService();
+  await notificationService.init();
   
-  // Solicitar permisos al inicio de la app
-  await _requestPermissions();
+  // Verificar y solicitar permisos de notificación
+  await notificationService.checkNotificationPermissions();
 
   runApp(MindKeeperApp());
-}
-
-Future<void> _requestPermissions() async {
-  // Solicitar múltiples permisos
-  await Future.wait([
-    Permission.notification.request(),
-    Permission.scheduleExactAlarm.request(),
-  ]);
 }
 
 class MindKeeperApp extends StatefulWidget {

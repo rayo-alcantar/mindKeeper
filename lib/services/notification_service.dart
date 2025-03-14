@@ -220,8 +220,15 @@ class NotificationService {
   Future<bool> checkNotificationPermissions() async {
     if (Platform.isAndroid) {
       final status = await Permission.notification.status;
-      if (status.isDenied) {
+      if (status.isDenied || status.isPermanentlyDenied) {
         final result = await Permission.notification.request();
+        if (result.isGranted) {
+          print("Permiso de notificaciones concedido.");
+        } else {
+          print("Permiso de notificaciones denegado.");
+          // Mostrar diálogo para explicar por qué se necesitan los permisos
+          _showPermissionDeniedDialog();
+        }
         return result.isGranted;
       }
       return status.isGranted;
@@ -237,6 +244,12 @@ class NotificationService {
       return settings ?? false;
     }
     return false;
+  }
+
+  void _showPermissionDeniedDialog() {
+    // Mostrar un diálogo explicativo si los permisos son denegados
+    print("Permiso de notificaciones denegado. Mostrar diálogo explicativo.");
+    // Aquí puedes implementar la lógica para mostrar un diálogo en la UI
   }
 
   /// Obtiene todas las notificaciones pendientes
