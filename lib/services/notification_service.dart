@@ -155,8 +155,8 @@ class NotificationService {
     required Duration interval,
     DateTime? startTime,
   }) async {
-    final DateTime initialTime =
-        startTime ?? DateTime.now().add(const Duration(seconds: 5));
+    // Ajustar el tiempo inicial para que sea el tiempo actual más el intervalo especificado
+    final DateTime initialTime = startTime ?? DateTime.now().add(interval);
 
     if (notificationCount == 0) {
       // Modo "constante": se usan notificaciones periódicas si el intervalo está soportado.
