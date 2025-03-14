@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:permission_handler/permission_handler.dart';
+import 'package:file_picker/file_picker.dart';
 
 class EditNotificationSoundScreen extends StatefulWidget {
   final String currentSound;
@@ -12,22 +14,41 @@ class EditNotificationSoundScreen extends StatefulWidget {
 class _EditNotificationSoundScreenState extends State<EditNotificationSoundScreen> {
   late String _selectedSound;
 
-  // Lista predefinida de sonidos disponibles.
-  final List<Map<String, String>> availableSounds = [
-    {'name': 'Default', 'value': 'default'},
-    {'name': 'Sonido 1', 'value': 'sound1'},
-    {'name': 'Sonido 2', 'value': 'sound2'},
-    {'name': 'Sonido 3', 'value': 'sound3'},
-  ];
-
   @override
   void initState() {
     super.initState();
     _selectedSound = widget.currentSound;
+    _checkPermissionAndOpenPicker();
   }
 
+  /// Verifica el permiso para acceder a archivos de audio y, de estar concedido,
+  /// abre el selector de archivos filtrando audio.
+  Future<void> _checkPermissionAndOpenPicker() async {
+    // Solicita el permiso para acceder a archivos de audio (Android 13+)
+    var status = await Permission.audio.status;
+    if (!status.isGranted) {
+      status = await Permission.audio.request();
+      if (!status.isGranted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Permiso de acceso a archivos de audio denegado')),
+        );
+        return;
+      }
+    }
+    // Abre el selector de archivos para audio.
+    FilePickerResult? result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['mp3', 'wav', 'ogg', 'm4a'],
+    );
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _selectedSound = result.files.single.path!;
+      });
+    }
+  }
+
+  /// Retorna el ringtone seleccionado a la pantalla anterior.
   void _saveSelection() {
-    // Retorna el valor seleccionado a la pantalla anterior.
     Navigator.pop(context, _selectedSound);
   }
 
@@ -37,24 +58,25 @@ class _EditNotificationSoundScreenState extends State<EditNotificationSoundScree
       appBar: AppBar(
         title: Text('Editar sonido de notificación'),
       ),
-      body: ListView.builder(
-        itemCount: availableSounds.length,
-        itemBuilder: (context, index) {
-          final sound = availableSounds[index];
-          return RadioListTile<String>(
-            title: Text(sound['name']!, style: TextStyle(fontSize: 16)),
-            secondary: Icon(Icons.music_note),
-            value: sound['value']!,
-            groupValue: _selectedSound,
-            onChanged: (value) {
-              setState(() {
-                _selectedSound = value!;
-              });
-            },
-            // Etiqueta semántica para accesibilidad.
-            subtitle: Text('Selecciona el sonido ${sound['name']}'),
-          );
-        },
+      body: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            ListTile(
+              title: Text('Sonido seleccionado:'),
+              subtitle: Text(
+                _selectedSound,
+                style: TextStyle(fontSize: 14),
+              ),
+            ),
+            SizedBox(height: 16),
+            ElevatedButton(
+              onPressed: _checkPermissionAndOpenPicker,
+              child: Text('Cambiar sonido'),
+            ),
+          ],
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _saveSelection,

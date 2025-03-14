@@ -16,6 +16,8 @@
 
     <!-- Permiso para modificar el ringtone de notificación en el futuro -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+    <!-- Permiso para acceder a archivos de audio en dispositivos con Android 13+ -->
+    <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
     <application
         android:name="${applicationName}"
