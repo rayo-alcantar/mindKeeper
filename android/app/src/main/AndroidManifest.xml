@@ -14,6 +14,9 @@
     <!-- Agregar permiso para reinicio del dispositivo -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
+    <!-- Permiso para modificar el ringtone de notificación en el futuro -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
     <application
         android:name="${applicationName}"
         android:label="mindkeeper"
@@ -65,11 +68,22 @@
 
     </application>
 
-    <!-- Requerido para que Flutter pueda consultar actividades que procesen texto -->
+    <!-- Se agregan queries para poder abrir enlaces externos (HTTP/HTTPS) -->
     <queries>
+        <!-- Para procesar texto (requerido por Flutter) -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
+        </intent>
+        <!-- Para abrir enlaces HTTP -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="http" />
+        </intent>
+        <!-- Para abrir enlaces HTTPS -->
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="https" />
         </intent>
     </queries>
 

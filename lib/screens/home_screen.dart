@@ -3,10 +3,12 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class HomeScreen extends StatelessWidget {
-  // Función para abrir una URL externa
-  Future<void> _openUrl(BuildContext context, String url) async {
-    if (await canLaunch(url)) {
-      await launch(url);
+  // Función para abrir una URL externa usando las APIs actuales de url_launcher.
+  Future<void> _openUrl(BuildContext context, String urlString) async {
+    final Uri url = Uri.parse(urlString);
+    if (await canLaunchUrl(url)) {
+      // Se abre la URL en una aplicación externa.
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('No se pudo abrir el enlace')),
@@ -14,7 +16,7 @@ class HomeScreen extends StatelessWidget {
     }
   }
 
-  // Función para salir de la aplicación
+  // Función para salir de la aplicación.
   void _exitApp(BuildContext context) {
     Navigator.of(context).pop();
   }
@@ -48,13 +50,13 @@ class HomeScreen extends StatelessWidget {
           ),
           ElevatedButton(
             onPressed: () {
-              _openUrl(context, 'https://www.paypal.me/tuusuario');
+              _openUrl(context, 'https://paypal.me/rayoalcantar?country.x=MX&locale.x=es_XC');
             },
             child: Text('Donar al desarrollador'),
           ),
           ElevatedButton(
             onPressed: () {
-              _openUrl(context, 'https://www.tusitioweb.com');
+              _openUrl(context, 'https://rayoscompany.com/');
             },
             child: Text('Mirar la web del desarrollador'),
           ),
@@ -64,9 +66,6 @@ class HomeScreen extends StatelessWidget {
             },
             child: Text('Salir'),
           ),
-
-          // Se ha removido el botón de prueba de notificación en 30s,
-          // tal como solicitaste.
         ],
       ),
     );
