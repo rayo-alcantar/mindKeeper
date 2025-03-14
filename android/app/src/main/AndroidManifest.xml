@@ -1,5 +1,4 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.example.mindkeeper">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
     <!-- Permisos para notificaciones y alarmas exactas en Android 12+ (API 31) y Android 13+ (API 33). -->
     <!-- SCHEDULE_EXACT_ALARM se requiere para notificaciones exactas. -->
@@ -11,11 +10,12 @@
     <!-- Despertar el dispositivo para programar notificaciones o alarmas, si corresponde -->
     <uses-permission android:name="android.permission.WAKE_LOCK" />
 
-    <!-- Agregar permiso para reinicio del dispositivo -->
+    <!-- Permiso para reinicio del dispositivo -->
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <!-- Permiso para modificar el ringtone de notificación en el futuro -->
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
     <!-- Permiso para acceder a archivos de audio en dispositivos con Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
@@ -33,15 +33,11 @@
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|
-                                   smallestScreenSize|locale|layoutDirection|
-                                   fontScale|screenLayout|density|uiMode">
-
-            <!-- Flutter normal theme -->
+                                   smallestScreenSize|locale|layoutDirection|fontScale|
+                                   screenLayout|density|uiMode">
             <meta-data
                 android:name="io.flutter.embedding.android.NormalTheme"
                 android:resource="@style/NormalTheme" />
-
-            <!-- Indica que esta es la Activity de arranque -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -67,26 +63,21 @@
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-
     </application>
 
-    <!-- Se agregan queries para poder abrir enlaces externos (HTTP/HTTPS) -->
+    <!-- Queries para abrir enlaces externos (HTTP/HTTPS) y para procesar texto -->
     <queries>
-        <!-- Para procesar texto (requerido por Flutter) -->
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT" />
             <data android:mimeType="text/plain" />
         </intent>
-        <!-- Para abrir enlaces HTTP -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="http" />
         </intent>
-        <!-- Para abrir enlaces HTTPS -->
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="https" />
         </intent>
     </queries>
-
 </manifest>
