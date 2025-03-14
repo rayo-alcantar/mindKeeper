@@ -23,7 +23,6 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
 
   Future<void> _loadReminders() async {
     // Se cargan los recordatorios desde la fuente de datos.
-    // Aquí se simula la carga, pero deberías reemplazarlo por la lógica real (por ejemplo, de una base de datos).
     List<Reminder> reminders = await _reminderService.getReminders();
     setState(() {
       _reminders = reminders;
@@ -41,7 +40,7 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
 
     if (updatedReminder != null) {
       setState(() {
-        // Se actualiza el recordatorio en la lista
+        // Se actualiza el recordatorio en la lista.
         final index = _reminders.indexWhere((r) => r.id == updatedReminder.id);
         if (index != -1) {
           _reminders[index] = updatedReminder;
@@ -73,9 +72,8 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
       // Se cancela la notificación asociada y se elimina el recordatorio de la fuente de datos.
       await _notificationService.cancelNotification(reminder.id);
       await _reminderService.deleteReminder(reminder.id);
-      setState(() {
-        _reminders.removeWhere((r) => r.id == reminder.id);
-      });
+      // Recargamos la lista para actualizar la interfaz inmediatamente.
+      await _loadReminders();
     }
   }
 
@@ -119,15 +117,21 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        IconButton(
-                          icon: Icon(Icons.edit),
-                          tooltip: 'Editar recordatorio',
-                          onPressed: () => _editReminder(reminder),
+                        Semantics(
+                          label: 'Editar recordatorio: ${reminder.name}',
+                          child: IconButton(
+                            icon: Icon(Icons.edit),
+                            tooltip: 'Editar recordatorio',
+                            onPressed: () => _editReminder(reminder),
+                          ),
                         ),
-                        IconButton(
-                          icon: Icon(Icons.delete),
-                          tooltip: 'Eliminar recordatorio',
-                          onPressed: () => _deleteReminder(reminder),
+                        Semantics(
+                          label: 'Eliminar recordatorio: ${reminder.name}',
+                          child: IconButton(
+                            icon: Icon(Icons.delete),
+                            tooltip: 'Eliminar recordatorio',
+                            onPressed: () => _deleteReminder(reminder),
+                          ),
                         ),
                       ],
                     ),

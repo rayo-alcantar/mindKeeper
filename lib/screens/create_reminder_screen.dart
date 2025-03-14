@@ -18,27 +18,10 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
   int _notificationCount = 1;
   Duration _interval = Duration(minutes: 15);
   bool _isCustom = false; // Si se selecciona "Personalizar"
-  String _customTime = ''; // Se espera formato HH:MM
 
-  // Valida el formato de hora (HH:MM)
-  String? _validateTime(String? value) {
-    if (value == null || value.trim().isEmpty) {
-      return 'Ingresa el intervalo en formato HH:MM';
-    }
-    final RegExp timeRegex = RegExp(r'^([0-1]?\d|2[0-3]):([0-5]\d)$');
-    if (!timeRegex.hasMatch(value.trim())) {
-      return 'Formato inválido. Usa HH:MM (ej. 10:30)';
-    }
-    return null;
-  }
-
-  // Convierte la cadena HH:MM a Duration
-  Duration _parseTimeToDuration(String value) {
-    final parts = value.split(':');
-    final hours = int.parse(parts[0]);
-    final minutes = int.parse(parts[1]);
-    return Duration(hours: hours, minutes: minutes);
-  }
+  // Campos para el tiempo personalizado, separados en horas y minutos.
+  String _customHours = '00';
+  String _customMinutes = '00';
 
   // Función para guardar el recordatorio y programar las notificaciones
   Future<void> _saveReminder() async {
@@ -46,7 +29,10 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
       _formKey.currentState!.save();
 
       if (_isCustom) {
-        _interval = _parseTimeToDuration(_customTime);
+        _interval = Duration(
+          hours: int.parse(_customHours),
+          minutes: int.parse(_customMinutes),
+        );
       }
 
       final reminderService = ReminderService();
@@ -138,17 +124,60 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
                 ],
               ),
               if (_isCustom)
-                TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Ingresa el intervalo en formato HH:MM',
-                    hintText: 'Ej. 10:30',
-                  ),
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.allow(RegExp(r'[\d:]')),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _customHours,
+                        decoration: InputDecoration(
+                          labelText: 'Horas',
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 2,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingresa horas';
+                          }
+                          final int? hours = int.tryParse(value);
+                          if (hours == null || hours < 0 || hours > 23) {
+                            return 'Horas entre 0 y 23';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _customHours = value!.padLeft(2, '0'),
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Text(":", style: TextStyle(fontSize: 18)),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        initialValue: _customMinutes,
+                        decoration: InputDecoration(
+                          labelText: 'Minutos',
+                        ),
+                        keyboardType: TextInputType.number,
+                        maxLength: 2,
+                        inputFormatters: [
+                          FilteringTextInputFormatter.digitsOnly,
+                        ],
+                        validator: (value) {
+                          if (value == null || value.trim().isEmpty) {
+                            return 'Ingresa minutos';
+                          }
+                          final int? minutes = int.tryParse(value);
+                          if (minutes == null || minutes < 0 || minutes > 59) {
+                            return 'Minutos entre 0 y 59';
+                          }
+                          return null;
+                        },
+                        onSaved: (value) => _customMinutes = value!.padLeft(2, '0'),
+                      ),
+                    ),
                   ],
-                  validator: _validateTime,
-                  onSaved: (value) => _customTime = value!.trim(),
                 )
               else
                 DropdownButtonFormField<Duration>(
