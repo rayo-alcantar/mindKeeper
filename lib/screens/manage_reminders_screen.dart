@@ -30,7 +30,7 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
   }
 
   void _editReminder(Reminder reminder) async {
-    // Se navega a la pantalla de editar recordatorio enviando el recordatorio seleccionado.
+    // Se navega a la pantalla de editar enviando el recordatorio seleccionado.
     final updatedReminder = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -69,7 +69,7 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
     );
 
     if (confirmDelete == true) {
-      // Se cancela la notificación asociada y se elimina el recordatorio de la fuente de datos.
+      // Se cancela la notificación asociada y se elimina el recordatorio.
       await _notificationService.cancelNotification(reminder.id);
       await _reminderService.deleteReminder(reminder.id);
       // Recargamos la lista para actualizar la interfaz inmediatamente.
@@ -113,23 +113,23 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
                         Text('Intervalo: ${reminder.interval.inMinutes} minutos', semanticsLabel: 'Intervalo: ${reminder.interval.inMinutes} minutos'),
                       ],
                     ),
-                    onTap: () => _editReminder(reminder),
+                    // Se ha eliminado el onTap de la tarjeta para evitar que se agrupe la acción.
                     trailing: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
                         Semantics(
-                          label: 'Editar recordatorio: ${reminder.name}',
+                          button: true,
+                          label: 'Botón: Editar recordatorio ${reminder.name}',
                           child: IconButton(
                             icon: Icon(Icons.edit),
-                            tooltip: 'Editar recordatorio',
                             onPressed: () => _editReminder(reminder),
                           ),
                         ),
                         Semantics(
-                          label: 'Eliminar recordatorio: ${reminder.name}',
+                          button: true,
+                          label: 'Botón: Eliminar recordatorio ${reminder.name}',
                           child: IconButton(
                             icon: Icon(Icons.delete),
-                            tooltip: 'Eliminar recordatorio',
                             onPressed: () => _deleteReminder(reminder),
                           ),
                         ),

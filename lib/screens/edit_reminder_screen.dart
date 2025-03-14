@@ -22,7 +22,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   late int _notificationCount;
   late Duration _interval;
   late bool _isCustom;
-  late String _customTime;
+
+  // Para el modo personalizado se usan dos campos: horas y minutos.
+  String _customHours = '00';
+  String _customMinutes = '00';
 
   final NotificationService _notificationService = NotificationService();
   final ReminderService _reminderService = ReminderService();
@@ -35,7 +38,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   @override
   void initState() {
     super.initState();
-    // Se inicializan los valores a partir del recordatorio seleccionado.
+    // Inicializamos los valores a partir del recordatorio seleccionado.
     _name = widget.reminder.name;
     _description = widget.reminder.description;
     _notificationCount = widget.reminder.notificationCount;
@@ -44,34 +47,38 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     // Se determina si el intervalo es predefinido o personalizado.
     if (_interval == _predefined15 || _interval == _predefined1h || _interval == _predefined2h) {
       _isCustom = false;
-      _customTime = ''; // No se utiliza en modo predefinido.
     } else {
       _isCustom = true;
-      // Se formatea el intervalo personalizado como HH:MM (por ejemplo, "02:30")
+      // Se separa el intervalo en horas y minutos.
       int hours = _interval.inHours;
       int minutes = _interval.inMinutes.remainder(60);
-      _customTime = '${hours.toString().padLeft(2, '0')}:${minutes.toString().padLeft(2, '0')}';
+      _customHours = hours.toString().padLeft(2, '0');
+      _customMinutes = minutes.toString().padLeft(2, '0');
     }
   }
 
-  // Valida el formato de hora (HH:MM)
-  String? _validateTime(String? value) {
+  // Validación para el campo de horas: valor entre 0 y 23.
+  String? _validateHours(String? value) {
     if (value == null || value.trim().isEmpty) {
-      return 'Ingresa el intervalo en formato HH:MM';
+      return 'Ingresa las horas';
     }
-    final RegExp timeRegex = RegExp(r'^([0-1]?\d|2[0-3]):([0-5]\d)$');
-    if (!timeRegex.hasMatch(value.trim())) {
-      return 'Formato inválido. Usa HH:MM (ej. 10:30)';
+    final int? hours = int.tryParse(value);
+    if (hours == null || hours < 0 || hours > 23) {
+      return 'Horas entre 0 y 23';
     }
     return null;
   }
 
-  // Convierte la cadena HH:MM a Duration
-  Duration _parseTimeToDuration(String value) {
-    final parts = value.split(':');
-    final hours = int.parse(parts[0]);
-    final minutes = int.parse(parts[1]);
-    return Duration(hours: hours, minutes: minutes);
+  // Validación para el campo de minutos: valor entre 0 y 59.
+  String? _validateMinutes(String? value) {
+    if (value == null || value.trim().isEmpty) {
+      return 'Ingresa los minutos';
+    }
+    final int? minutes = int.tryParse(value);
+    if (minutes == null || minutes < 0 || minutes > 59) {
+      return 'Minutos entre 0 y 59';
+    }
+    return null;
   }
 
   Future<void> _saveEditedReminder() async {
@@ -79,7 +86,10 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       _formKey.currentState!.save();
 
       if (_isCustom) {
-        _interval = _parseTimeToDuration(_customTime);
+        _interval = Duration(
+          hours: int.parse(_customHours),
+          minutes: int.parse(_customMinutes),
+        );
       }
 
       // Se crea el objeto actualizado del recordatorio.
@@ -194,20 +204,46 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   ),
                 ],
               ),
-              // Si es personalizado se muestra un campo para ingresar el intervalo en formato HH:MM; de lo contrario, un menú desplegable con opciones predefinidas.
+              // Si es personalizado se muestran dos campos separados para horas y minutos.
               _isCustom
-                  ? TextFormField(
-                      initialValue: _customTime,
-                      decoration: InputDecoration(
-                        labelText: 'Ingresa el intervalo en formato HH:MM',
-                        hintText: 'Ej. 10:30',
-                      ),
-                      keyboardType: TextInputType.number,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(RegExp(r'[\d:]')),
+                  ? Row(
+                      children: [
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: _customHours,
+                            decoration: InputDecoration(
+                              labelText: 'Horas',
+                            ),
+                            keyboardType: TextInputType.number,
+                            maxLength: 2,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            validator: _validateHours,
+                            onSaved: (value) =>
+                                _customHours = value!.padLeft(2, '0'),
+                          ),
+                        ),
+                        SizedBox(width: 8),
+                        Text(":", style: TextStyle(fontSize: 18)),
+                        SizedBox(width: 8),
+                        Expanded(
+                          child: TextFormField(
+                            initialValue: _customMinutes,
+                            decoration: InputDecoration(
+                              labelText: 'Minutos',
+                            ),
+                            keyboardType: TextInputType.number,
+                            maxLength: 2,
+                            inputFormatters: [
+                              FilteringTextInputFormatter.digitsOnly,
+                            ],
+                            validator: _validateMinutes,
+                            onSaved: (value) =>
+                                _customMinutes = value!.padLeft(2, '0'),
+                          ),
+                        ),
                       ],
-                      validator: _validateTime,
-                      onSaved: (value) => _customTime = value!.trim(),
                     )
                   : DropdownButtonFormField<Duration>(
                       decoration: InputDecoration(
@@ -245,11 +281,17 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                 children: [
                   ElevatedButton(
                     onPressed: _saveEditedReminder,
-                    child: Text('Guardar cambios', semanticsLabel: 'Botón: Guardar cambios en el recordatorio'),
+                    child: Text(
+                      'Guardar cambios',
+                      semanticsLabel: 'Botón: Guardar cambios en el recordatorio',
+                    ),
                   ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: Text('Cancelar', semanticsLabel: 'Botón: Cancelar edición del recordatorio'),
+                    child: Text(
+                      'Cancelar',
+                      semanticsLabel: 'Botón: Cancelar edición del recordatorio',
+                    ),
                   ),
                 ],
               ),
