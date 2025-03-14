@@ -1,8 +1,9 @@
 ﻿//lib/screens/manage_reminders_screen.dart
 import 'package:flutter/material.dart';
-import '../services/reminder_service.dart';
-import '../models/reminder.dart';
+import 'package:mindkeeper/services/notification_service.dart';
+import 'package:mindkeeper/models/reminder.dart';
 import 'edit_reminder_screen.dart';
+import 'package:mindkeeper/services/reminder_service.dart';
 
 class ManageRemindersScreen extends StatefulWidget {
   @override
@@ -10,92 +11,130 @@ class ManageRemindersScreen extends StatefulWidget {
 }
 
 class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
+  final NotificationService _notificationService = NotificationService();
   final ReminderService _reminderService = ReminderService();
+  List<Reminder> _reminders = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _loadReminders();
+  }
+
+  Future<void> _loadReminders() async {
+    // Se cargan los recordatorios desde la fuente de datos.
+    // Aquí se simula la carga, pero deberías reemplazarlo por la lógica real (por ejemplo, de una base de datos).
+    List<Reminder> reminders = await _reminderService.getReminders();
+    setState(() {
+      _reminders = reminders;
+    });
+  }
+
+  void _editReminder(Reminder reminder) async {
+    // Se navega a la pantalla de editar recordatorio enviando el recordatorio seleccionado.
+    final updatedReminder = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditReminderScreen(reminder: reminder),
+      ),
+    );
+
+    if (updatedReminder != null) {
+      setState(() {
+        // Se actualiza el recordatorio en la lista
+        final index = _reminders.indexWhere((r) => r.id == updatedReminder.id);
+        if (index != -1) {
+          _reminders[index] = updatedReminder;
+        }
+      });
+    }
+  }
+
+  void _deleteReminder(Reminder reminder) async {
+    final bool? confirmDelete = await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text('Eliminar Recordatorio'),
+        content: Text('¿Estás seguro de que deseas eliminar el recordatorio "${reminder.name}"?'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancelar', semanticsLabel: 'Botón: Cancelar eliminación del recordatorio'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text('Eliminar', semanticsLabel: 'Botón: Eliminar recordatorio'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmDelete == true) {
+      // Se cancela la notificación asociada y se elimina el recordatorio de la fuente de datos.
+      await _notificationService.cancelNotification(reminder.id);
+      await _reminderService.deleteReminder(reminder.id);
+      setState(() {
+        _reminders.removeWhere((r) => r.id == reminder.id);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final reminders = _reminderService.getReminders();
-
     return Scaffold(
       appBar: AppBar(
         title: Text('Gestionar Recordatorios'),
       ),
-      body: reminders.isEmpty
-          ? _buildEmptyView(context)
+      body: _reminders.isEmpty
+          ? Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text('No hay recordatorios creados.'),
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text('Regresar', semanticsLabel: 'Botón: Regresar a la pantalla anterior'),
+                  ),
+                ],
+              ),
+            )
           : ListView.builder(
-              itemCount: reminders.length,
+              itemCount: _reminders.length,
               itemBuilder: (context, index) {
-                final reminder = reminders[index];
-
-                // Envuelve el ListTile en un Semantics para indicar que es pulsable.
-                return Semantics(
-                  button: true,
-                  label: 'Recordatorio ${reminder.name}, pulsa para editar',
+                final reminder = _reminders[index];
+                return Card(
+                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   child: ListTile(
-                    title: Text(reminder.name),
-                    subtitle: Text(
-                      'Descripción: ${reminder.description}\n'
-                      'Notificaciones: ${reminder.notificationCount == 0 ? "Constante" : reminder.notificationCount}\n'
-                      'Intervalo: ${_durationToString(reminder.interval)}',
+                    title: Text(reminder.name, semanticsLabel: 'Nombre: ${reminder.name}'),
+                    subtitle: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(reminder.description, semanticsLabel: 'Descripción: ${reminder.description}'),
+                        Text('Número de notificaciones: ${reminder.notificationCount}', semanticsLabel: 'Número de notificaciones: ${reminder.notificationCount}'),
+                        Text('Intervalo: ${reminder.interval.inMinutes} minutos', semanticsLabel: 'Intervalo: ${reminder.interval.inMinutes} minutos'),
+                      ],
                     ),
-                    isThreeLine: true,
-                    trailing: Semantics(
-                      label: 'Borrar recordatorio',
-                      button: true,
-                      child: IconButton(
-                        icon: Icon(Icons.delete),
-                        onPressed: () async {
-                          await _reminderService.deleteReminder(reminder.id);
-                          setState(() {});
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text('Recordatorio eliminado.')),
-                          );
-                        },
-                      ),
-                    ),
-                    onTap: () async {
-                      // Navega a la pantalla de edición y espera el resultado.
-                      final updated = await Navigator.push<Reminder?>(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditReminderScreen(reminder: reminder),
+                    onTap: () => _editReminder(reminder),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        IconButton(
+                          icon: Icon(Icons.edit),
+                          tooltip: 'Editar recordatorio',
+                          onPressed: () => _editReminder(reminder),
                         ),
-                      );
-                      // Si se devolvió un recordatorio actualizado, lo editamos
-                      if (updated != null) {
-                        await _reminderService.editReminder(updated);
-                        setState(() {});
-                      }
-                    },
+                        IconButton(
+                          icon: Icon(Icons.delete),
+                          tooltip: 'Eliminar recordatorio',
+                          onPressed: () => _deleteReminder(reminder),
+                        ),
+                      ],
+                    ),
                   ),
                 );
               },
             ),
     );
-  }
-
-  Widget _buildEmptyView(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text('No hay recordatorios guardados.'),
-          SizedBox(height: 16),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: Text('Volver al menú'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  // Convierte una Duration a un string amigable, ej. "0h 15m"
-  String _durationToString(Duration duration) {
-    final hours = duration.inHours;
-    final minutes = duration.inMinutes.remainder(60);
-    return '${hours}h ${minutes}m';
   }
 }

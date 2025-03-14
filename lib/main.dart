@@ -7,6 +7,8 @@ import 'screens/home_screen.dart';
 import 'screens/create_reminder_screen.dart';
 import 'screens/manage_reminders_screen.dart';
 import 'screens/config_screen.dart';
+import 'screens/edit_reminder_screen.dart';
+import 'models/reminder.dart'; // Asegúrate de importar el modelo Reminder
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -86,11 +88,22 @@ class _MindKeeperAppState extends State<MindKeeperApp> {
         primarySwatch: Colors.blue,
       ),
       initialRoute: '/',
+      // Rutas fijas para otras pantallas
       routes: {
         '/': (context) => HomeScreen(),
         '/create': (context) => CreateReminderScreen(),
         '/manage': (context) => ManageRemindersScreen(),
         '/config': (context) => ConfigScreen(),
+      },
+      // Definición de la ruta '/edit' para recibir un objeto Reminder a través de los argumentos
+      onGenerateRoute: (settings) {
+        if (settings.name == '/edit') {
+          final reminder = settings.arguments as Reminder;
+          return MaterialPageRoute(
+            builder: (context) => EditReminderScreen(reminder: reminder),
+          );
+        }
+        return null;
       },
     );
   }
