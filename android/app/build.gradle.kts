@@ -8,22 +8,23 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-// Si ya no quieres usar key.properties, puedes eliminar este bloque por completo.
-// Lo mantengo aquí comentado por si deseas reactivarlo más tarde.
-/*
+// Cargar key.properties si existe
 val keystoreProperties = Properties().apply {
-    val keystorePropertiesFile = file("key.properties")
+    val keystorePropertiesFile = file(rootProject.file("app/key.properties"))
 
+
+    println("📌 Buscando key.properties en: " + keystorePropertiesFile.absolutePath)
+    
     if (keystorePropertiesFile.exists()) {
         load(FileInputStream(keystorePropertiesFile))
+        println("✅ key.properties cargado correctamente.")
     } else {
-        println("Warning: No se encontró android/key.properties. Asegúrate de crearlo.")
+        throw GradleException("❌ ERROR: No se encontró android/app/key.properties. Asegúrate de crearlo.")
     }
 }
-*/
 
 android {
-    namespace = "com.rayoscompany.mindkeeper"
+    namespace = "com.Rayoscompany.MindKeeper"
     ndkVersion = "27.0.12077973"
     compileSdk = 35
 
@@ -38,20 +39,28 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.rayoscompany.mindkeeper"
+        applicationId = "com.Rayoscompany.MindKeeper"
         minSdk = 21
         targetSdk = 35
-        // Se obtienen las variables de versión inyectadas por Flutter (o se usan valores por defecto).
-        versionCode = (project.findProperty("flutterVersionCode") as? String)?.toInt() ?: 1
-        versionName = project.findProperty("flutterVersionName") as? String ?: "1.0"
+        
+        versionCode = 2 
+        versionName = "2.0"
     }
 
-    // Eliminamos signingConfigs y la referencia en buildTypes
+    signingConfigs {
+        create("release") {
+            storeFile = file(keystoreProperties["storeFile"]?.toString() ?: "C:/Users/angel/mindkeeper.jks")
+            storePassword = keystoreProperties["storePassword"] as String?
+            keyAlias = keystoreProperties["keyAlias"] as String?
+            keyPassword = keystoreProperties["keyPassword"] as String?
+        }
+    }
+
     buildTypes {
         getByName("release") {
-            // Sin firma local, quedará sin firmar (o firmada con la debug key si no configuras nada más).
             isMinifyEnabled = false
             isShrinkResources = false
+            signingConfig = signingConfigs.getByName("release")
         }
     }
 }

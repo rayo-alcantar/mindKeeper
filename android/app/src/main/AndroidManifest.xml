@@ -1,5 +1,6 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+
     <!-- Permisos para notificaciones y alarmas exactas en Android 12+ (API 31) y Android 13+ (API 33). -->
     <!-- SCHEDULE_EXACT_ALARM se requiere para notificaciones exactas. -->
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM" />
