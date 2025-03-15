@@ -1,4 +1,5 @@
-﻿import 'package:flutter/material.dart';
+﻿// lib/screens/edit_reminder_screen.dart
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:mindkeeper/models/reminder.dart';
 import 'package:mindkeeper/services/notification_service.dart';
@@ -23,7 +24,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   late Duration _interval;
   late bool _isCustom;
 
-  // Para el modo personalizado se usan dos campos: horas y minutos.
+  // Campos para el tiempo personalizado (horas y minutos)
   String _customHours = '00';
   String _customMinutes = '00';
 
@@ -38,7 +39,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
   @override
   void initState() {
     super.initState();
-    // Inicializamos los valores a partir del recordatorio seleccionado.
+    // Inicializamos los valores a partir del recordatorio existente.
     _name = widget.reminder.name;
     _description = widget.reminder.description;
     _notificationCount = widget.reminder.notificationCount;
@@ -54,6 +55,110 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       int minutes = _interval.inMinutes.remainder(60);
       _customHours = hours.toString().padLeft(2, '0');
       _customMinutes = minutes.toString().padLeft(2, '0');
+    }
+  }
+
+  // Diálogo de ayuda que explica cada campo del formulario.
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Ayuda'),
+          content: SingleChildScrollView(
+            child: ListBody(
+              children: [
+                Text('• Nombre: Título del recordatorio.'),
+                Text('• Descripción: Detalles adicionales.'),
+                Text('• Número de notificaciones: Cantidad a enviar (0 para notificaciones constantes).'),
+                Text('• Intervalo entre notificaciones: Elige entre opciones predefinidas o personaliza el intervalo.'),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text('Entendido'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Construye el widget para la entrada del intervalo, ya sea predefinido o personalizado.
+  Widget _buildIntervalInput() {
+    if (_isCustom) {
+      return Row(
+        children: [
+          Expanded(
+            child: Semantics(
+              label: 'Horas para el intervalo personalizado',
+              textField: true,
+              child: TextFormField(
+                initialValue: _customHours,
+                decoration: InputDecoration(labelText: 'Horas'),
+                keyboardType: TextInputType.number,
+                maxLength: 2,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: _validateHours,
+                onSaved: (value) => _customHours = value!.padLeft(2, '0'),
+              ),
+            ),
+          ),
+          SizedBox(width: 8),
+          Text(":", style: TextStyle(fontSize: 18)),
+          SizedBox(width: 8),
+          Expanded(
+            child: Semantics(
+              label: 'Minutos para el intervalo personalizado',
+              textField: true,
+              child: TextFormField(
+                initialValue: _customMinutes,
+                decoration: InputDecoration(labelText: 'Minutos'),
+                keyboardType: TextInputType.number,
+                maxLength: 2,
+                inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                validator: _validateMinutes,
+                onSaved: (value) => _customMinutes = value!.padLeft(2, '0'),
+              ),
+            ),
+          ),
+        ],
+      );
+    } else {
+      return Semantics(
+        label: 'Selector de intervalo predefinido',
+        child: DropdownButtonFormField<Duration>(
+          decoration: InputDecoration(
+            labelText: 'Intervalo entre notificaciones',
+          ),
+          value: (_interval == _predefined15 ||
+                  _interval == _predefined1h ||
+                  _interval == _predefined2h)
+              ? _interval
+              : _predefined15,
+          items: [
+            DropdownMenuItem(
+              value: _predefined15,
+              child: Text('15 minutos'),
+            ),
+            DropdownMenuItem(
+              value: _predefined1h,
+              child: Text('1 hora'),
+            ),
+            DropdownMenuItem(
+              value: _predefined2h,
+              child: Text('2 horas'),
+            ),
+          ],
+          onChanged: (value) {
+            setState(() {
+              _interval = value!;
+            });
+          },
+        ),
+      );
     }
   }
 
@@ -81,6 +186,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     return null;
   }
 
+  // Función para guardar los cambios y reprogramar las notificaciones.
   Future<void> _saveEditedReminder() async {
     if (_formKey.currentState!.validate()) {
       _formKey.currentState!.save();
@@ -117,7 +223,6 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
       // Se actualiza el recordatorio en la fuente de datos.
       await _reminderService.editReminder(updatedReminder);
 
-      // Se muestra un mensaje de confirmación.
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Recordatorio actualizado y notificaciones reprogramadas.')),
@@ -132,6 +237,13 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Editar Recordatorio'),
+        actions: [
+          IconButton(
+            icon: Icon(Icons.help_outline),
+            tooltip: 'Ayuda',
+            onPressed: _showHelpDialog,
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: EdgeInsets.all(16),
@@ -141,36 +253,46 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Campo para el nombre del recordatorio
-              TextFormField(
-                initialValue: _name,
-                decoration: InputDecoration(
-                  labelText: 'Nombre del recordatorio',
+              Semantics(
+                label: 'Campo de nombre del recordatorio',
+                textField: true,
+                child: TextFormField(
+                  initialValue: _name,
+                  decoration: InputDecoration(labelText: 'Nombre del recordatorio'),
+                  onSaved: (value) => _name = value!.trim(),
+                  validator: (value) =>
+                      (value == null || value.trim().isEmpty) ? 'Ingresa un nombre' : null,
                 ),
-                onSaved: (value) => _name = value!.trim(),
-                validator: (value) =>
-                    (value == null || value.trim().isEmpty) ? 'Ingresa un nombre' : null,
               ),
               SizedBox(height: 16),
               // Campo para la descripción
-              TextFormField(
-                initialValue: _description,
-                decoration: InputDecoration(
-                  labelText: 'Descripción',
+              Semantics(
+                label: 'Campo de descripción',
+                textField: true,
+                child: TextFormField(
+                  initialValue: _description,
+                  decoration: InputDecoration(labelText: 'Descripción'),
+                  onSaved: (value) => _description = value?.trim() ?? '',
                 ),
-                onSaved: (value) => _description = value?.trim() ?? '',
               ),
               SizedBox(height: 16),
               // Campo para el número de notificaciones
-              TextFormField(
-                initialValue: _notificationCount.toString(),
-                decoration: InputDecoration(
-                  labelText: 'Número de notificaciones (0 para constante)',
+              Semantics(
+                label: 'Campo para número de notificaciones',
+                textField: true,
+                child: TextFormField(
+                  initialValue: _notificationCount.toString(),
+                  decoration: InputDecoration(labelText: 'Número de notificaciones (0 para constante)'),
+                  keyboardType: TextInputType.number,
+                  onSaved: (value) => _notificationCount = int.tryParse(value!.trim()) ?? 1,
                 ),
-                keyboardType: TextInputType.number,
-                onSaved: (value) =>
-                    _notificationCount = int.tryParse(value!.trim()) ?? 1,
               ),
               SizedBox(height: 16),
+              Text(
+                'Intervalo entre notificaciones',
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+              SizedBox(height: 8),
               // Selección entre intervalos predefinidos y personalizados
               Row(
                 children: [
@@ -204,93 +326,24 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                   ),
                 ],
               ),
-              // Si es personalizado se muestran dos campos separados para horas y minutos.
-              _isCustom
-                  ? Row(
-                      children: [
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: _customHours,
-                            decoration: InputDecoration(
-                              labelText: 'Horas',
-                            ),
-                            keyboardType: TextInputType.number,
-                            maxLength: 2,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            validator: _validateHours,
-                            onSaved: (value) =>
-                                _customHours = value!.padLeft(2, '0'),
-                          ),
-                        ),
-                        SizedBox(width: 8),
-                        Text(":", style: TextStyle(fontSize: 18)),
-                        SizedBox(width: 8),
-                        Expanded(
-                          child: TextFormField(
-                            initialValue: _customMinutes,
-                            decoration: InputDecoration(
-                              labelText: 'Minutos',
-                            ),
-                            keyboardType: TextInputType.number,
-                            maxLength: 2,
-                            inputFormatters: [
-                              FilteringTextInputFormatter.digitsOnly,
-                            ],
-                            validator: _validateMinutes,
-                            onSaved: (value) =>
-                                _customMinutes = value!.padLeft(2, '0'),
-                          ),
-                        ),
-                      ],
-                    )
-                  : DropdownButtonFormField<Duration>(
-                      decoration: InputDecoration(
-                        labelText: 'Intervalo entre notificaciones',
-                      ),
-                      value: (_interval == _predefined15 ||
-                              _interval == _predefined1h ||
-                              _interval == _predefined2h)
-                          ? _interval
-                          : _predefined15,
-                      items: [
-                        DropdownMenuItem(
-                          value: _predefined15,
-                          child: Text('15 minutos'),
-                        ),
-                        DropdownMenuItem(
-                          value: _predefined1h,
-                          child: Text('1 hora'),
-                        ),
-                        DropdownMenuItem(
-                          value: _predefined2h,
-                          child: Text('2 horas'),
-                        ),
-                      ],
-                      onChanged: (value) {
-                        setState(() {
-                          _interval = value!;
-                        });
-                      },
-                    ),
+              _buildIntervalInput(),
               SizedBox(height: 24),
-              // Botones de guardar y cancelar
+              // Botones de Cancelar y Guardar cambios (Cancelar a la izquierda, Guardar a la derecha)
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  ElevatedButton(
-                    onPressed: _saveEditedReminder,
-                    child: Text(
-                      'Guardar cambios',
-                      semanticsLabel: 'Botón: Guardar cambios en el recordatorio',
-                    ),
-                  ),
                   ElevatedButton(
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Cancelar',
                       semanticsLabel: 'Botón: Cancelar edición del recordatorio',
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: _saveEditedReminder,
+                    child: Text(
+                      'Guardar cambios',
+                      semanticsLabel: 'Botón: Guardar cambios en el recordatorio',
                     ),
                   ),
                 ],
