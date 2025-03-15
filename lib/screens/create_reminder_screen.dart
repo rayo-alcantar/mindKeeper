@@ -33,10 +33,38 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
           content: SingleChildScrollView(
             child: ListBody(
               children: [
-                Text('• Nombre: Título del recordatorio.'),
-                Text('• Descripción: Detalles adicionales.'),
-                Text('• Número de notificaciones: Cantidad a enviar (0 para notificaciones constantes).'),
-                Text('• Intervalo entre notificaciones: Elige entre opciones predefinidas o personaliza el intervalo.'),
+                Text(
+                  '• Nombre: Ingrese el título del recordatorio. Ejemplo: "Medicamento", "Reunión de trabajo".',
+                ),
+                Text(
+                  '• Descripción: Agregue detalles o instrucciones adicionales. Ejemplo: "Tomar con agua después del almuerzo", "Reunirse en sala de conferencias".',
+                ),
+                Text(
+                  '• Número de notificaciones: Indique cuántas notificaciones se enviarán. Use 0 para notificaciones constantes o ingrese un número (ej. 3) para un número limitado.',
+                ),
+                Text('• Intervalo entre notificaciones:'),
+                Text(
+                  '   - Si selecciona "Predefinido", podrá elegir entre intervalos de 15 minutos, 1 hora o 2 horas.',
+                ),
+                Text(
+                  '   - Si selecciona "Personalizar", ingrese el intervalo manualmente usando dos campos:',
+                ),
+                Text(
+                  '       * Horas: Ingrese un número entre 0 y 23 (ej. "01" para 1 hora).',
+                ),
+                Text(
+                  '       * Minutos: Ingrese un número entre 0 y 59 (ej. "30" para 30 minutos).',
+                ),
+                Text(
+                  '   Ejemplo: Para un intervalo de 1 hora y 30 minutos, ingrese "01" en Horas y "30" en Minutos.',
+                ),
+                Text('• Botones "Cancelar" y "Guardar":'),
+                Text(
+                  '   - Cancelar: Descarta los cambios y regresa a la pantalla anterior.',
+                ),
+                Text(
+                  '   - Guardar: Valida y guarda el recordatorio, programando las notificaciones.',
+                ),
               ],
             ),
           ),
@@ -168,10 +196,14 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
       appBar: AppBar(
         title: Text('Crear Recordatorio'),
         actions: [
-          IconButton(
-            icon: Icon(Icons.help_outline),
-            tooltip: 'Ayuda',
-            onPressed: _showHelpDialog,
+          Semantics(
+            label: 'Ayuda con los controles',
+            excludeSemantics: true,
+            child: IconButton(
+              icon: Icon(Icons.help_outline),
+              tooltip: 'Ayuda',
+              onPressed: _showHelpDialog,
+            ),
           ),
         ],
       ),
