@@ -20,6 +20,18 @@
     <!-- Permiso para acceder a archivos de audio en dispositivos con Android 13+ -->
     <uses-permission android:name="android.permission.READ_MEDIA_AUDIO" />
 
+    <!-- Permiso para vibrar el dispositivo -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Permiso para usar alarmas exactas -->
+    <uses-permission android:name="android.permission.USE_EXACT_ALARM" />
+
+    <!-- Permiso para leer almacenamiento externo -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+
+    <!-- Permiso para escribir en almacenamiento externo -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
+
     <application
         android:name="${applicationName}"
         android:label="mindkeeper"

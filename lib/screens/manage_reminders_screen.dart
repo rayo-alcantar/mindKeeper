@@ -14,6 +14,7 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
   final NotificationService _notificationService = NotificationService();
   final ReminderService _reminderService = ReminderService();
   List<Reminder> _reminders = [];
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -22,10 +23,11 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
   }
 
   Future<void> _loadReminders() async {
-    // Se cargan los recordatorios desde la fuente de datos.
+    setState(() => _isLoading = true);
     List<Reminder> reminders = await _reminderService.getReminders();
     setState(() {
       _reminders = reminders;
+      _isLoading = false;
     });
   }
 
@@ -83,62 +85,65 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
       appBar: AppBar(
         title: Text('Gestionar Recordatorios'),
       ),
-      body: _reminders.isEmpty
-          ? Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text('No hay recordatorios creados.'),
-                  SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () => Navigator.pop(context),
-                    child: Text('Regresar', semanticsLabel: 'Botón: Regresar a la pantalla anterior'),
+      body: _isLoading
+          ? Center(child: CircularProgressIndicator())
+          : _reminders.isEmpty
+              ? Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text('No hay recordatorios creados.'),
+                      SizedBox(height: 16),
+                      ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text('Regresar', semanticsLabel: 'Botón: Regresar a la pantalla anterior'),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: _reminders.length,
-              itemBuilder: (context, index) {
-                final reminder = _reminders[index];
-                return Card(
-                  margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                  child: ListTile(
-                    title: Text(reminder.name, semanticsLabel: 'Nombre: ${reminder.name}'),
-                    subtitle: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(reminder.description, semanticsLabel: 'Descripción: ${reminder.description}'),
-                        Text('Número de notificaciones: ${reminder.notificationCount}', semanticsLabel: 'Número de notificaciones: ${reminder.notificationCount}'),
-                        Text('Intervalo: ${reminder.interval.inMinutes} minutos', semanticsLabel: 'Intervalo: ${reminder.interval.inMinutes} minutos'),
-                      ],
-                    ),
-                    // Se ha eliminado el onTap de la tarjeta para evitar que se agrupe la acción.
-                    trailing: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Semantics(
-                          button: true,
-                          label: 'Botón: Editar recordatorio ${reminder.name}',
-                          child: IconButton(
-                            icon: Icon(Icons.edit),
-                            onPressed: () => _editReminder(reminder),
-                          ),
+                )
+              : ListView.builder(
+                  itemCount: _reminders.length,
+                  itemBuilder: (context, index) {
+                    final reminder = _reminders[index];
+                    return Card(
+                      margin: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: ListTile(
+                        title: Text(reminder.name, semanticsLabel: 'Nombre: ${reminder.name}'),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(reminder.description, semanticsLabel: 'Descripción: ${reminder.description}'),
+                            Text('Número de notificaciones: ${reminder.notificationCount}', semanticsLabel: 'Número de notificaciones: ${reminder.notificationCount}'),
+                            Text('Intervalo: ${reminder.interval.inMinutes} minutos', semanticsLabel: 'Intervalo: ${reminder.interval.inMinutes} minutos'),
+                          ],
                         ),
-                        Semantics(
-                          button: true,
-                          label: 'Botón: Eliminar recordatorio ${reminder.name}',
-                          child: IconButton(
-                            icon: Icon(Icons.delete),
-                            onPressed: () => _deleteReminder(reminder),
-                          ),
+                        // Se ha eliminado el onTap de la tarjeta para evitar que se agrupe la acción.
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Semantics(
+                              button: true,
+                              label: 'Botón: Editar recordatorio ${reminder.name}',
+                              child: IconButton(
+                                icon: Icon(Icons.edit),
+                                onPressed: () => _editReminder(reminder),
+                              ),
+                            ),
+                            Semantics(
+                              button: true,
+                              label: 'Botón: Eliminar recordatorio ${reminder.name}',
+                              child: IconButton(
+                                icon: Icon(Icons.delete),
+                                onPressed: () => _deleteReminder(reminder),
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                );
-              },
-            ),
+                      ),
+                    );
+                  },
+                ),
     );
   }
 }
+

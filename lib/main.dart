@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
@@ -33,6 +34,7 @@ class _MindKeeperAppState extends State<MindKeeperApp> {
   void initState() {
     super.initState();
     _initializeNotifications();
+    _requestPermissions();
   }
 
   Future<void> _initializeNotifications() async {
@@ -54,6 +56,22 @@ class _MindKeeperAppState extends State<MindKeeperApp> {
         print("Permiso de notificaciones denegado.");
         // Mostrar diálogo para explicar por qué se necesitan los permisos
         _showPermissionDeniedDialog();
+      }
+    }
+  }
+
+  Future<void> _requestPermissions() async {
+    // Solicitar permisos de notificación
+    final notificationStatus = await Permission.notification.status;
+    if (!notificationStatus.isGranted) {
+      await Permission.notification.request();
+    }
+
+    // Solicitar permisos de almacenamiento para Android < 13
+    if (Platform.isAndroid) {
+      final storageStatus = await Permission.storage.status;
+      if (!storageStatus.isGranted) {
+        await Permission.storage.request();
       }
     }
   }

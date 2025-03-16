@@ -1,5 +1,7 @@
 ﻿//lib/services/reminder_service.dart
+import 'dart:convert';
 import 'dart:math';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:mindkeeper/models/reminder.dart';
 import 'notification_service.dart';
 
@@ -9,19 +11,52 @@ class ReminderService {
   static final ReminderService _instance = ReminderService._internal();
   factory ReminderService() => _instance;
 
-  ReminderService._internal();
-
-  /// Lista simulada de recordatorios en memoria (en una app real, vendría de BD).
+  static const String _storageKey = 'reminders';
   final List<Reminder> _reminders = [];
 
-  /// Retorna una copia de la lista de recordatorios.
-  List<Reminder> getReminders() {
+  ReminderService._internal();
+
+  Future<void> _saveToStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final List<Map<String, dynamic>> remindersJson = _reminders.map((r) => {
+      'id': r.id,
+      'name': r.name,
+      'description': r.description,
+      'notificationCount': r.notificationCount,
+      'interval': r.interval.inMinutes,
+      'isConstant': r.isConstant,
+    }).toList();
+    await prefs.setString(_storageKey, jsonEncode(remindersJson));
+  }
+
+  Future<void> _loadFromStorage() async {
+    final prefs = await SharedPreferences.getInstance();
+    final String? storedData = prefs.getString(_storageKey);
+    if (storedData != null) {
+      final List<dynamic> decodedData = jsonDecode(storedData);
+      _reminders.clear();
+      _reminders.addAll(decodedData.map((data) => Reminder(
+        id: data['id'],
+        name: data['name'],
+        description: data['description'],
+        notificationCount: data['notificationCount'],
+        interval: Duration(minutes: data['interval']),
+        isConstant: data['isConstant'],
+      )));
+    }
+  }
+
+  Future<List<Reminder>> getReminders() async {
+    if (_reminders.isEmpty) {
+      await _loadFromStorage();
+    }
     return List.unmodifiable(_reminders);
   }
 
   /// Agrega un nuevo recordatorio y programa sus notificaciones.
   Future<void> addReminder(Reminder reminder) async {
     _reminders.add(reminder);
+    await _saveToStorage();
     try {
       await NotificationService().scheduleReminder(
         id: reminder.id,
@@ -44,6 +79,7 @@ class ReminderService {
       await _cancelReminderNotifications(_reminders[index]);
       // Actualiza el recordatorio en la lista
       _reminders[index] = updated;
+      await _saveToStorage();
       // Programa las nuevas notificaciones
       await NotificationService().scheduleReminder(
         id: updated.id,
@@ -62,6 +98,7 @@ class ReminderService {
       final reminder = _reminders[index];
       await _cancelReminderNotifications(reminder);
       _reminders.removeAt(index);
+      await _saveToStorage();
     }
   }
 
