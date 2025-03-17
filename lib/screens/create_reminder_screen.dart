@@ -17,7 +17,7 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
   String _description = '';
   int _notificationCount = 1;
   Duration _interval = Duration(minutes: 15);
-  bool _isCustom = false; // Selección entre intervalo predefinido y personalizado
+  bool _isCustom = false; // false: predefinido, true: personalizado
 
   // Campos para tiempo personalizado (horas y minutos)
   String _customHours = '00';
@@ -44,19 +44,10 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
                 ),
                 Text('• Intervalo entre notificaciones:'),
                 Text(
-                  '   - Si selecciona "Predefinido", podrá elegir entre intervalos de 15 minutos, 1 hora o 2 horas.',
+                  '   - Si no se personaliza, podrá elegir entre intervalos de 15 minutos, 1 hora o 2 horas.',
                 ),
                 Text(
-                  '   - Si selecciona "Personalizar", ingrese el intervalo manualmente usando dos campos:',
-                ),
-                Text(
-                  '       * Horas: Ingrese un número entre 0 y 23 (ej. "01" para 1 hora).',
-                ),
-                Text(
-                  '       * Minutos: Ingrese un número entre 0 y 59 (ej. "30" para 30 minutos).',
-                ),
-                Text(
-                  '   Ejemplo: Para un intervalo de 1 hora y 30 minutos, ingrese "01" en Horas y "30" en Minutos.',
+                  '   - Si se activa la opción "Personalizar intervalo", ingrese manualmente horas y minutos.',
                 ),
                 Text('• Botones "Cancelar" y "Guardar":'),
                 Text(
@@ -79,83 +70,113 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
     );
   }
 
-  // Construye el widget de entrada para el intervalo (predefinido o personalizado)
-  Widget _buildIntervalInput() {
-    if (_isCustom) {
-      return Row(
-        children: [
-          Expanded(
-            child: TextFormField(
-              initialValue: _customHours,
-              decoration: InputDecoration(labelText: 'Horas'),
-              keyboardType: TextInputType.number,
-              maxLength: 2,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Ingresa horas';
-                }
-                final int? hours = int.tryParse(value);
-                if (hours == null || hours < 0 || hours > 23) {
-                  return 'Horas entre 0 y 23';
-                }
-                return null;
-              },
-              onSaved: (value) => _customHours = value!.padLeft(2, '0'),
-            ),
-          ),
-          SizedBox(width: 8),
-          Text(":", style: TextStyle(fontSize: 18)),
-          SizedBox(width: 8),
-          Expanded(
-            child: TextFormField(
-              initialValue: _customMinutes,
-              decoration: InputDecoration(labelText: 'Minutos'),
-              keyboardType: TextInputType.number,
-              maxLength: 2,
-              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Ingresa minutos';
-                }
-                final int? minutes = int.tryParse(value);
-                if (minutes == null || minutes < 0 || minutes > 59) {
-                  return 'Minutos entre 0 y 59';
-                }
-                return null;
-              },
-              onSaved: (value) => _customMinutes = value!.padLeft(2, '0'),
-            ),
-          ),
-        ],
-      );
-    } else {
-      return DropdownButtonFormField<Duration>(
-        decoration: InputDecoration(
-          labelText: 'Intervalo entre notificaciones',
+  // Construye el widget para la selección del intervalo
+  Widget _buildIntervalSelector() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Alterna entre intervalo predefinido y personalizado
+        SwitchListTile(
+          title: Text('Personalizar intervalo'),
+          value: _isCustom,
+          onChanged: (value) {
+            setState(() {
+              _isCustom = value;
+              // Reinicia al valor predefinido si se desactiva la personalización
+              if (!_isCustom) {
+                _interval = Duration(minutes: 15);
+                _customHours = '00';
+                _customMinutes = '00';
+              }
+            });
+          },
         ),
-        value: _interval,
-        items: [
-          DropdownMenuItem(
-            value: Duration(minutes: 15),
-            child: Text('15 minutos'),
-          ),
-          DropdownMenuItem(
-            value: Duration(hours: 1),
-            child: Text('1 hora'),
-          ),
-          DropdownMenuItem(
-            value: Duration(hours: 2),
-            child: Text('2 horas'),
-          ),
-        ],
-        onChanged: (value) {
-          setState(() {
-            _interval = value!;
-          });
-        },
-      );
-    }
+        SizedBox(height: 8),
+        // Muestra el control correspondiente
+        _isCustom
+            ? Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: _customHours,
+                      decoration: InputDecoration(
+                        labelText: 'Horas',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      maxLength: 2,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingresa horas';
+                        }
+                        final int? hours = int.tryParse(value);
+                        if (hours == null || hours < 0 || hours > 23) {
+                          return 'Horas entre 0 y 23';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) =>
+                          _customHours = value!.padLeft(2, '0'),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  Text(":", style: TextStyle(fontSize: 18)),
+                  SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      initialValue: _customMinutes,
+                      decoration: InputDecoration(
+                        labelText: 'Minutos',
+                        border: OutlineInputBorder(),
+                      ),
+                      keyboardType: TextInputType.number,
+                      maxLength: 2,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      validator: (value) {
+                        if (value == null || value.trim().isEmpty) {
+                          return 'Ingresa minutos';
+                        }
+                        final int? minutes = int.tryParse(value);
+                        if (minutes == null || minutes < 0 || minutes > 59) {
+                          return 'Minutos entre 0 y 59';
+                        }
+                        return null;
+                      },
+                      onSaved: (value) =>
+                          _customMinutes = value!.padLeft(2, '0'),
+                    ),
+                  ),
+                ],
+              )
+            : DropdownButtonFormField<Duration>(
+                decoration: InputDecoration(
+                  labelText: 'Intervalo entre notificaciones',
+                  border: OutlineInputBorder(),
+                ),
+                value: _interval,
+                items: [
+                  DropdownMenuItem(
+                    value: Duration(minutes: 15),
+                    child: Text('15 minutos'),
+                  ),
+                  DropdownMenuItem(
+                    value: Duration(hours: 1),
+                    child: Text('1 hora'),
+                  ),
+                  DropdownMenuItem(
+                    value: Duration(hours: 2),
+                    child: Text('2 horas'),
+                  ),
+                ],
+                onChanged: (value) {
+                  setState(() {
+                    _interval = value!;
+                  });
+                },
+              ),
+      ],
+    );
   }
 
   // Función para guardar el recordatorio y programar las notificaciones.
@@ -215,88 +236,57 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               // Campo para el nombre
-              Semantics(
-                label: 'Campo de nombre del recordatorio',
-                textField: true,
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Nombre del recordatorio'),
-                  onSaved: (value) => _name = value!.trim(),
-                  validator: (value) => (value == null || value.trim().isEmpty) ? 'Ingresa un nombre' : null,
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Nombre del recordatorio',
+                  border: OutlineInputBorder(),
                 ),
+                onSaved: (value) => _name = value!.trim(),
+                validator: (value) => (value == null || value.trim().isEmpty)
+                    ? 'Ingresa un nombre'
+                    : null,
               ),
               SizedBox(height: 16),
               // Campo para la descripción
-              Semantics(
-                label: 'Campo de descripción',
-                textField: true,
-                child: TextFormField(
-                  decoration: InputDecoration(labelText: 'Descripción'),
-                  onSaved: (value) => _description = value?.trim() ?? '',
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Descripción',
+                  border: OutlineInputBorder(),
                 ),
+                onSaved: (value) => _description = value?.trim() ?? '',
               ),
               SizedBox(height: 16),
               // Campo para número de notificaciones
-              Semantics(
-                label: 'Campo para número de notificaciones',
-                textField: true,
-                child: TextFormField(
-                  decoration: InputDecoration(
-                    labelText: 'Número de notificaciones (0 para constante)',
-                  ),
-                  keyboardType: TextInputType.number,
-                  onSaved: (value) => _notificationCount = int.tryParse(value!.trim()) ?? 1,
+              TextFormField(
+                decoration: InputDecoration(
+                  labelText: 'Número de notificaciones (0 para constante)',
+                  border: OutlineInputBorder(),
                 ),
+                keyboardType: TextInputType.number,
+                onSaved: (value) =>
+                    _notificationCount = int.tryParse(value!.trim()) ?? 1,
               ),
               SizedBox(height: 16),
-              Text(
-                'Intervalo entre notificaciones',
-                style: Theme.of(context).textTheme.titleMedium,
-              ),
-              SizedBox(height: 8),
-              // Selección entre intervalo predefinido y personalizado
-              Row(
-                children: [
-                  Expanded(
-                    child: ListTile(
-                      title: Text('Predefinido'),
-                      leading: Radio<bool>(
-                        value: false,
-                        groupValue: _isCustom,
-                        onChanged: (value) {
-                          setState(() {
-                            _isCustom = value!;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: ListTile(
-                      title: Text('Personalizar'),
-                      leading: Radio<bool>(
-                        value: true,
-                        groupValue: _isCustom,
-                        onChanged: (value) {
-                          setState(() {
-                            _isCustom = value!;
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              _buildIntervalInput(),
+              // Sección para el intervalo
+              _buildIntervalSelector(),
               SizedBox(height: 24),
-              // Botones de Cancelar y Guardar (Cancelar a la izquierda, Guardar a la derecha)
+              // Botones de Cancelar y Guardar
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red, // Color accesible para cancelar
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: () => Navigator.pop(context),
                     child: Text('Cancelar'),
                   ),
                   ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.green, // Color accesible para guardar
+                      foregroundColor: Colors.white,
+                    ),
                     onPressed: _saveReminder,
                     child: Text('Guardar'),
                   ),
