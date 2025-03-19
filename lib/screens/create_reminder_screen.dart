@@ -34,10 +34,10 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
             child: ListBody(
               children: [
                 Text(
-                  '• Nombre: Ingrese el título del recordatorio. Ejemplo: "Medicamento", "Reunión de trabajo".',
+                  '• Nombre: Ingrese el título del recordatorio. Ejemplo: "Cita médica", "Reunión con clientes".',
                 ),
                 Text(
-                  '• Descripción: Agregue detalles o instrucciones adicionales. Ejemplo: "Tomar con agua después del almuerzo", "Reunirse en sala de conferencias".',
+                  '• Descripción: Agregue detalles o instrucciones adicionales. Ejemplo: "Revisar resultados de laboratorio", "Preparar presentación".',
                 ),
                 Text(
                   '• Número de notificaciones: Indique cuántas notificaciones se enviarán. Use 0 para notificaciones constantes o ingrese un número (ej. 3) para un número limitado.',
@@ -47,14 +47,14 @@ class _CreateReminderScreenState extends State<CreateReminderScreen> {
                   '   - Si no se personaliza, podrá elegir entre intervalos de 15 minutos, 1 hora o 2 horas.',
                 ),
                 Text(
-                  '   - Si se activa la opción "Personalizar intervalo", ingrese manualmente horas y minutos.',
+                  '   - Si se activa "Personalizar intervalo", ingrese manualmente horas y minutos.',
                 ),
-                Text('• Botones "Cancelar" y "Guardar":'),
+                Text('• Botones "Cancelar" y "Guardar cambios":'),
                 Text(
                   '   - Cancelar: Descarta los cambios y regresa a la pantalla anterior.',
                 ),
                 Text(
-                  '   - Guardar: Valida y guarda el recordatorio, programando las notificaciones.',
+                  '   - Guardar: Valida y actualiza el recordatorio, programando las notificaciones.',
                 ),
               ],
             ),
