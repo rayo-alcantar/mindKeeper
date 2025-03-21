@@ -64,7 +64,7 @@ class _ManageRemindersScreenState extends State<ManageRemindersScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: Text('Eliminar', semanticsLabel: 'Botón: Eliminar recordatorio'),
+            child: Text('Eliminar', semanticsLabel: 'Botón: Eliminar'),
           ),
         ],
       ),

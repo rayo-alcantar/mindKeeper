@@ -336,7 +336,7 @@ class _EditReminderScreenState extends State<EditReminderScreen> {
                     onPressed: () => Navigator.pop(context),
                     child: Text(
                       'Cancelar',
-                      semanticsLabel: 'Botón: Cancelar edición del recordatorio',
+                      semanticsLabel: 'Botón: Cancelar',
                     ),
                   ),
                   ElevatedButton(
